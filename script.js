@@ -23,7 +23,8 @@ async function fetchLightcurve(objectName) {
     currentFetchController = new AbortController();
     
     try {
-        const response = await fetch(`./data/lightcurves/${encodeURIComponent(objectName)}.json`, {
+        const safeName = encodeURIComponent(objectName).replace(/%2B/g, '+');
+        const response = await fetch(`./data/lightcurves/${safeName}.json?v=1`, {
             signal: currentFetchController.signal
         });
         if (!response.ok) throw new Error('Not found');
