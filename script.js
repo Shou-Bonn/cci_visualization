@@ -3,6 +3,15 @@ const {DeckGL, OrbitView, PointCloudLayer, LineLayer, TextLayer} = deck;
 const lightcurveCache = new Map();
 let currentFetchController = null;
 
+function rgbToHex(r, g, b) {
+    return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).padStart(6, '0');
+}
+
+function hexToRgb(hex) {
+    const bigint = parseInt(hex.slice(1), 16);
+    return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+
 async function fetchLightcurve(objectName) {
     if (lightcurveCache.has(objectName)) {
         return lightcurveCache.get(objectName);
@@ -258,6 +267,7 @@ const state = {
     hoveredEpochId: null,
     lockedEpochId: null, // Track frozen state
     hoverTimeout: null,  // Debounce for hovering off
+    colorUpdateCounter: 0,
     bounds: {
         x: {min: Infinity, max: -Infinity},
         y: {min: Infinity, max: -Infinity},
@@ -448,14 +458,31 @@ function renderFilters() {
         checkbox.value = subclass;
         checkbox.addEventListener('change', handleFilterChange);
         
-        const colorIndicator = document.createElement('span');
+        const colorIndicator = document.createElement('input');
+        colorIndicator.type = 'color';
         colorIndicator.style.display = 'inline-block';
-        colorIndicator.style.width = '12px';
-        colorIndicator.style.height = '12px';
+        colorIndicator.style.width = '16px';
+        colorIndicator.style.height = '16px';
+        colorIndicator.style.margin = '0 5px';
+        colorIndicator.style.padding = '0';
+        colorIndicator.style.border = 'none';
+        colorIndicator.style.cursor = 'pointer';
+        colorIndicator.style.backgroundColor = 'transparent';
         
         const rgb = state.colorMap[subclass];
-        colorIndicator.style.backgroundColor = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-        colorIndicator.style.borderRadius = '50%';
+        colorIndicator.value = rgbToHex(rgb[0], rgb[1], rgb[2]);
+        
+        colorIndicator.addEventListener('input', (e) => {
+            const newRgb = hexToRgb(e.target.value);
+            state.colorMap[subclass] = newRgb;
+            state.points.forEach(p => {
+                if (p.subclass === subclass) {
+                    p.color = newRgb;
+                }
+            });
+            state.colorUpdateCounter++;
+            updatePlot();
+        });
         
         label.appendChild(checkbox);
         label.appendChild(colorIndicator);
@@ -726,7 +753,7 @@ function updatePlot() {
                 }
             },
             updateTriggers: {
-                getColor: [state.hoveredEpochId, state.controls.alpha]
+                getColor: [state.hoveredEpochId, state.controls.alpha, state.colorUpdateCounter]
             }
         })
     ];
