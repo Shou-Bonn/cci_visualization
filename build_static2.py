@@ -27,7 +27,9 @@ for filename in os.listdir(EPOCHS_DIR):
         raw_subclass = target_info.get('subclass') or 'Unknown'
         
         custom_subclass = 'Unknown'
-        if raw_subclass == 'LMXB':
+        if obj_class == 'Unknown' or raw_subclass == 'Unknown' or not obj_class or not raw_subclass:
+            custom_subclass = 'Unknown'
+        elif raw_subclass == 'LMXB':
             if obj_class == 'BH': custom_subclass = 'LMBH'
             elif obj_class == 'NS': custom_subclass = 'LMNS'
             elif obj_class == 'Pulsar': custom_subclass = 'LMPulsar'
@@ -39,6 +41,7 @@ for filename in os.listdir(EPOCHS_DIR):
             else: custom_subclass = 'HMXB'
             
         in_de_beurs = target_info.get('in_de_beurs_paper', False)
+        is_burster = target_info.get('is_burster', False)
         
         epochs_data = data.get('epochs', {})
         parsed_epochs = []
@@ -77,6 +80,7 @@ for filename in os.listdir(EPOCHS_DIR):
                 "class": obj_class,
                 "subclass": custom_subclass,
                 "in_de_beurs": in_de_beurs,
+                "is_burster": is_burster,
                 "epochs": parsed_epochs
             })
 

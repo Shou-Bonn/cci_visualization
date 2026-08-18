@@ -23,7 +23,7 @@ async function fetchLightcurve(objectName) {
     currentFetchController = new AbortController();
     
     try {
-        const safeName = encodeURIComponent(objectName).replace(/%2B/g, '+');
+        const safeName = encodeURIComponent(objectName);
         const response = await fetch(`./data/lightcurves/${safeName}.json?v=1`, {
             signal: currentFetchController.signal
         });
@@ -930,11 +930,12 @@ window.showLightcurve = async function(epochId) {
     const minTime = sortedPoints[0].time;
     const maxTime = sortedPoints[sortedPoints.length - 1].time;
     
-    // Show loading state immediately
     const panel = document.getElementById('lightcurve-panel');
     const plotContainer = document.getElementById('lightcurve-plot');
+    const loadingIndicator = document.getElementById('lightcurve-loading');
     panel.classList.remove('hidden');
-    plotContainer.innerHTML = `<div style="padding: 40px; color: #aaa; text-align: center; font-size: 1.2em;">Loading lightcurve data...<br><small style="font-size:0.8em; color:#777;">Large datasets may take a moment to fetch.</small></div>`;
+    loadingIndicator.classList.remove('hidden');
+    plotContainer.style.opacity = '0.3';
     
     const tooltipBtn = document.querySelector('#tooltip button');
     if (tooltipBtn) {
@@ -944,6 +945,9 @@ window.showLightcurve = async function(epochId) {
     
     // Fetch and render lightcurve
     const rawData = await fetchLightcurve(epochData.object);
+    
+    loadingIndicator.classList.add('hidden');
+    plotContainer.style.opacity = '1.0';
     
     if (tooltipBtn) {
         tooltipBtn.innerText = 'See Lightcurve';
