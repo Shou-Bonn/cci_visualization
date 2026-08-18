@@ -393,17 +393,18 @@ tooltipElement.addEventListener('mousedown', e => {
     }
 });
 
-window.addEventListener('mousemove', e => {
-    if (tooltipState.isDragging) {
-        const dx = e.clientX - tooltipState.dragStartX;
-        const dy = e.clientY - tooltipState.dragStartY;
-        tooltipState.offsetX += dx;
-        tooltipState.offsetY += dy;
-        tooltipState.dragStartX = e.clientX;
-        tooltipState.dragStartY = e.clientY;
-        updateTooltipPosition();
-    }
-});
+  window.addEventListener('mousemove', e => {
+      if (tooltipState.isDragging) {
+          const dx = e.clientX - tooltipState.dragStartX;
+          const dy = e.clientY - tooltipState.dragStartY;
+          tooltipState.offsetX += dx;
+          tooltipState.offsetY += dy;
+          tooltipState.dragStartX = e.clientX;
+          tooltipState.dragStartY = e.clientY;
+          updateTooltipPosition();
+          e.stopPropagation(); // Prevent anything else from handling this drag
+      }
+  }, {capture: true});
 
   const stopDrag = () => {
       if (tooltipState.isDragging) {
@@ -412,8 +413,9 @@ window.addEventListener('mousemove', e => {
       }
   };
   
-  window.addEventListener('mouseup', stopDrag);
-  window.addEventListener('mouseleave', stopDrag);
+  window.addEventListener('mouseup', stopDrag, {capture: true});
+  window.addEventListener('pointerup', stopDrag, {capture: true});
+  window.addEventListener('mouseleave', stopDrag, {capture: true});
 
 document.addEventListener('DOMContentLoaded', init);
 
