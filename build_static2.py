@@ -24,7 +24,24 @@ for filename in os.listdir(EPOCHS_DIR):
         
         target_info = master_targets.get(object_name, {})
         obj_class = target_info.get('compact_object_class') or 'Unknown'
-        custom_subclass = target_info.get('subclass') or 'Unknown'
+        raw_subclass = target_info.get('subclass') or 'Unknown'
+        
+        custom_subclass = 'Unknown'
+        if raw_subclass == 'LMXB':
+            if obj_class == 'BH': custom_subclass = 'LMBH'
+            elif obj_class == 'NS': custom_subclass = 'LMNS'
+            elif obj_class == 'Pulsar': custom_subclass = 'LMPulsar'
+        elif raw_subclass == 'HMXB':
+            if obj_class == 'BH': custom_subclass = 'HMBH'
+            elif obj_class == 'NS': custom_subclass = 'HMNS'
+            elif obj_class == 'Pulsar': custom_subclass = 'HMPulsar'
+            
+        if custom_subclass == 'Unknown':
+            if obj_class in ['BH', 'NS', 'Pulsar']:
+                custom_subclass = obj_class
+            elif obj_class == 'NS or BH':
+                custom_subclass = 'BH/NS'
+                
         in_de_beurs = target_info.get('in_de_beurs_paper', False)
         
         epochs_data = data.get('epochs', {})
