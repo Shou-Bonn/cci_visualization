@@ -831,6 +831,13 @@ async function updateHoverInfo(epochId, x, y) {
         <p><strong>Epoch ID:</strong> ${epochId}</p>
         <p><strong>Length:</strong> ${epochData.length_days.toFixed(1)} days</p>
         <p><strong>Points in Epoch:</strong> ${epochData.points.length}</p>
+        <div style="margin-top: 15px; margin-bottom: 5px;">
+            <div style="font-size: 0.85em; display: flex; justify-content: space-between; margin-bottom: 3px; color: #ccc;">
+                <span>Early</span>
+                <span>Late</span>
+            </div>
+            <div style="height: 8px; width: 100%; border-radius: 4px; background: linear-gradient(to right, rgb(0,50,255), rgb(255,50,0));"></div>
+        </div>
         <button onclick="window.showLightcurve('${epochId}')" style="margin-top:10px; width:100%; padding: 5px; cursor: pointer; border: 1px solid #555; background: #333; color: white; border-radius: 4px;">See Lightcurve</button>
     `;
     
