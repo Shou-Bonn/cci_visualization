@@ -57,8 +57,12 @@ function setupZoomButton() {
 
 function renderLightcurve(data, objectName, minTime, maxTime) {
     const panel = document.getElementById('lightcurve-panel');
+    const plotContainer = document.getElementById('lightcurve-plot');
+    
     if (!data || !data.bands) {
-        panel.classList.add('hidden');
+        // Data failed to load or is invalid
+        panel.classList.remove('hidden');
+        plotContainer.innerHTML = `<div style="padding: 20px; color: #ff6666; text-align: center;">Failed to load lightcurve data for ${objectName}. It may not exist on the server.</div>`;
         return;
     }
     
