@@ -300,15 +300,6 @@ const state = {
     }
 };
 
-const deBeursSources = new Set([
-    'LMC_X-3', 'LMC_X-1', 'MAXI_J1535-571', 'GX_339-4', 'GRS_1739-278', 
-    'H_1743-322', 'MAXI_J1820+070', 'GRS_1915+105', 'Cyg_X-1', '4U_1957+115', 
-    'Cyg_X-3', 'H_0614+091', '4U_1254-690', 'Cir_X-1', '4U_1608-52', 'Sco_X-1', 
-    'H_1636-536', 'GX_349+2', 'GX_9+9', 'GX_3+1', 'GX_5-1', 'GX_9+1', 'GX_13+1', 
-    'GX_17+2', 'Ser_X-1', 'HETE_J1900.1-2455', 'Aql_X-1', '4U_1916-053', 
-    'Cyg_X-2', '1A_0535+262', '4U_1626-67'
-]);
-
 function getColorForSubclass(subclass) {
     const s = subclass.toUpperCase();
     
@@ -469,6 +460,7 @@ function processData() {
                 object: obj.object,
                 class: obj.class,
                 subclass: obj.subclass,
+                in_de_beurs: obj.in_de_beurs,
                 epoch_id: epoch.epoch_id,
                 length_days: epoch.length_days,
                 points: epoch.points
@@ -492,6 +484,7 @@ function processData() {
                     object: obj.object,
                     subclass: subclass,
                     is_burster: obj.is_burster,
+                    in_de_beurs: obj.in_de_beurs,
                     color: state.colorMap[subclass]
                 });
             });
@@ -692,7 +685,7 @@ function updatePlot() {
     
     const filteredPoints = state.points.filter(p => {
         if (!showBursters && p.is_burster) return false;
-        if (showDeBeurs && !deBeursSources.has(p.object)) return false;
+        if (showDeBeurs && !p.in_de_beurs) return false;
         
         // Physically remove unhovered points to prevent WebGL depth-buffer blocking
         const activeEpoch = state.lockedEpochId || state.hoveredEpochId;
@@ -908,6 +901,7 @@ async function updateHoverInfo(epochId) {
         <p><strong>Object:</strong> ${epochData.object}</p>
         <p><strong>Class:</strong> ${epochData.class}</p>
         <p><strong>Subclass:</strong> ${epochData.subclass}</p>
+        <p><strong>De Beurs Object:</strong> ${epochData.in_de_beurs ? 'Yes' : 'No'}</p>
         <p><strong>Epoch ID:</strong> ${epochId}</p>
         <p><strong>Length:</strong> ${epochData.length_days.toFixed(1)} days</p>
         <p><strong>Points in Epoch:</strong> ${epochData.points.length}</p>
