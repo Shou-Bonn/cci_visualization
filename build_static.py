@@ -28,8 +28,8 @@ for filename in os.listdir(EPOCHS_DIR):
         object_name = metadata.get('object_name', filename.replace('.json', ''))
         
         target_info = master_targets.get(object_name, {})
-        obj_class = target_info.get('compact_object_class', 'Unknown')
-        custom_subclass = target_info.get('subclass', 'Unknown')
+        obj_class = target_info.get('compact_object_class') or 'Unknown'
+        custom_subclass = target_info.get('subclass') or 'Unknown'
         in_de_beurs = target_info.get('in_de_beurs_paper', False)
         
         epochs_data = data.get('epochs', {})
