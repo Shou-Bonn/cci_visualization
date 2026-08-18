@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D CCI Epoch Visualizer</title>
+    <link rel="stylesheet" href="./style.css">
+    <!-- Deck.gl standalone -->
+    <script src="https://unpkg.com/deck.gl@^8.9.0/dist.min.js"></script>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h3>Filters</h3>
+            <div id="subclass-filters" class="filters">
+                <!-- Filters will be injected here -->
+            </div>
+            <div class="filters" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                <label class="filter-label" style="font-weight: bold; color: #fff;">
+                    <input type="checkbox" id="filter-bursters" checked> Show Bursters
+                </label>
+                <label class="filter-label" style="font-weight: bold; color: #fff; margin-top: 5px;">
+                    <input type="checkbox" id="filter-debeurs"> Show de Beurs 2022 Only
+                </label>
+            </div>
+            
+            <h3>Controls</h3>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="point-size">Point Size: <span id="val-point-size">1.5</span></label>
+                    <input type="range" id="point-size" min="0.1" max="10" step="0.1" value="1.5">
+                </div>
+                <div class="control-group">
+                    <label for="point-alpha">Transparency (Alpha): <span id="val-point-alpha">255</span></label>
+                    <input type="range" id="point-alpha" min="10" max="255" step="1" value="255">
+                </div>
+                
+                <h4>Axes Limits</h4>
+                <div class="control-group">
+                    <label>SC (X): <span id="val-x-range"></span></label>
+                    <div class="range-inputs">
+                        <input type="range" id="limit-x-min">
+                        <input type="range" id="limit-x-max">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>HC (Y): <span id="val-y-range"></span></label>
+                    <div class="range-inputs">
+                        <input type="range" id="limit-y-min">
+                        <input type="range" id="limit-y-max">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>RelInt (Z): <span id="val-z-range"></span></label>
+                    <div class="range-inputs">
+                        <input type="range" id="limit-z-min">
+                        <input type="range" id="limit-z-max">
+                    </div>
+                </div>
+            </div>
+
+            <h3>Camera Views</h3>
+            <div class="view-controls">
+                <button id="btn-recenter">Recenter Plot</button>
+                <button id="btn-hc-sc">HC vs SC (Y vs X)</button>
+                <button id="btn-hc-relint">HC vs RelInt (Y vs Z)</button>
+                <button id="btn-sc-relint">SC vs RelInt (X vs Z)</button>
+            </div>
+
+        </aside>
+        
+        <main class="plot-container">
+            <button id="toggle-sidebar" class="panel-toggle toggle-left">❮</button>
+            <div id="loading" class="loading">Loading data...</div>
+            <div id="tooltip" class="tooltip hidden"></div>
+            
+            <div id="lightcurve-panel" class="lightcurve-panel hidden">
+                <div class="lightcurve-header">
+                    <h3 style="color: white;">Epoch Lightcurve</h3>
+                    <button id="zoom-btn" class="zoom-btn">Zoom to Epoch</button>
+                </div>
+                <div id="lightcurve-plot"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>
