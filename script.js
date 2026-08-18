@@ -274,7 +274,7 @@ const state = {
         z: {min: Infinity, max: -Infinity}
     },
     controls: {
-        pointSize: 0.05,
+        pointSize: 0.01,
         alpha: 255,
         xMin: -Infinity,
         xMax: Infinity,
@@ -324,7 +324,7 @@ function getColorForSubclass(subclass) {
 
 let currentViewState = {
     target: [0, 0, 0],
-    zoom: 10,
+    zoom: 8,
     rotationX: 30,
     rotationOrbit: 30
 };
@@ -511,7 +511,7 @@ function setupSliders() {
 
     sizeInput.addEventListener('input', e => {
         state.controls.pointSize = parseFloat(e.target.value);
-        valSize.innerText = state.controls.pointSize.toFixed(2);
+        valSize.innerText = state.controls.pointSize.toFixed(3);
         updatePlot();
     });
     
