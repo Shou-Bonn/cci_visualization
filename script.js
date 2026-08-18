@@ -405,12 +405,15 @@ window.addEventListener('mousemove', e => {
     }
 });
 
-window.addEventListener('mouseup', () => {
-    if (tooltipState.isDragging) {
-        tooltipState.isDragging = false;
-        tooltipElement.style.cursor = 'move';
-    }
-});
+  const stopDrag = () => {
+      if (tooltipState.isDragging) {
+          tooltipState.isDragging = false;
+          tooltipElement.style.cursor = 'move';
+      }
+  };
+  
+  window.addEventListener('mouseup', stopDrag);
+  window.addEventListener('mouseleave', stopDrag);
 
 document.addEventListener('DOMContentLoaded', init);
 
