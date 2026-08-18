@@ -691,7 +691,10 @@ function updatePlot() {
         const activeEpoch = state.lockedEpochId || state.hoveredEpochId;
         if (activeEpoch && p.epoch_id !== activeEpoch) return false;
         
-        return state.selectedSubclasses.has(p.subclass) &&
+        const isSelectedClass = state.selectedSubclasses.has(p.subclass);
+        const shouldShowByClass = isSelectedClass || (showBursters && p.is_burster);
+        
+        return shouldShowByClass &&
             p.sc >= state.controls.xMin && p.sc <= state.controls.xMax &&
             p.hc >= state.controls.yMin && p.hc <= state.controls.yMax &&
             p.relint >= state.controls.zMin && p.relint <= state.controls.zMax;
