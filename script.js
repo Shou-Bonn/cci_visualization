@@ -336,17 +336,18 @@ let deckgl = new DeckGL({
             state.hoveredEpochId = null;
             clearHoverInfo();
             updatePlot();
-        } else if (info.object) {
+        } else if (info.object || state.hoveredEpochId) {
             // Lock the epoch
-            state.lockedEpochId = info.object.epoch_id;
+            const targetEpochId = info.object ? info.object.epoch_id : state.hoveredEpochId;
+            state.lockedEpochId = targetEpochId;
             if (state.hoverTimeout) {
                 clearTimeout(state.hoverTimeout);
                 state.hoverTimeout = null;
             }
             // Ensure it is hovered
-            if (state.hoveredEpochId !== info.object.epoch_id) {
-                state.hoveredEpochId = info.object.epoch_id;
-                updateHoverInfo(info.object.epoch_id, info.x, info.y);
+            if (state.hoveredEpochId !== targetEpochId) {
+                state.hoveredEpochId = targetEpochId;
+                updateHoverInfo(targetEpochId, info.x, info.y);
             }
             updatePlot();
         }
