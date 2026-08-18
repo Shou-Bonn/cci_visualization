@@ -31,7 +31,7 @@ async function fetchLightcurve(objectName) {
         lightcurveCache.set(objectName, data);
         return data;
     } catch (e) {
-        if (e.name === 'AbortError') return null;
+        if (e.name === 'AbortError') return 'aborted';
         console.error('Error fetching lightcurve:', e);
         return null;
     }
@@ -149,6 +149,7 @@ function renderLightcurve(data, objectName, minTime, maxTime) {
                 color: 'rgba(255,255,255,0.1)'
             },
             mode: 'markers',
+            type: 'scattergl', // Critical for 10k+ points GPU rendering
             marker: { size: 4, color: pointColors },
             name: band,
             xaxis: 'x',
@@ -929,9 +930,27 @@ window.showLightcurve = async function(epochId) {
     const minTime = sortedPoints[0].time;
     const maxTime = sortedPoints[sortedPoints.length - 1].time;
     
+    // Show loading state immediately
+    const panel = document.getElementById('lightcurve-panel');
+    const plotContainer = document.getElementById('lightcurve-plot');
+    panel.classList.remove('hidden');
+    plotContainer.innerHTML = `<div style="padding: 40px; color: #aaa; text-align: center; font-size: 1.2em;">Loading lightcurve data...<br><small style="font-size:0.8em; color:#777;">Large datasets may take a moment to fetch.</small></div>`;
+    
+    const tooltipBtn = document.querySelector('#tooltip button');
+    if (tooltipBtn) {
+        tooltipBtn.innerText = 'Loading...';
+        tooltipBtn.style.opacity = '0.5';
+    }
+    
     // Fetch and render lightcurve
     const rawData = await fetchLightcurve(epochData.object);
-    if (!rawData) return; // Ignore aborted fetches
+    
+    if (tooltipBtn) {
+        tooltipBtn.innerText = 'See Lightcurve';
+        tooltipBtn.style.opacity = '1';
+    }
+    
+    if (rawData === 'aborted') return; // Ignore aborted fetches
     renderLightcurve(rawData, epochData.object, minTime, maxTime);
 };
 
