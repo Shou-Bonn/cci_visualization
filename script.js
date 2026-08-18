@@ -4,7 +4,7 @@ const lightcurveCache = new Map();
 let currentFetchController = null;
 
 function rgbToHex(r, g, b) {
-    return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).padStart(6, '0');
+    return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
 function hexToRgb(hex) {
@@ -274,7 +274,7 @@ const state = {
         z: {min: Infinity, max: -Infinity}
     },
     controls: {
-        pointSize: 1.5,
+        pointSize: 0.05,
         alpha: 255,
         xMin: -Infinity,
         xMax: Infinity,
@@ -511,7 +511,7 @@ function setupSliders() {
 
     sizeInput.addEventListener('input', e => {
         state.controls.pointSize = parseFloat(e.target.value);
-        valSize.innerText = state.controls.pointSize.toFixed(1);
+        valSize.innerText = state.controls.pointSize.toFixed(2);
         updatePlot();
     });
     
@@ -723,7 +723,7 @@ function updatePlot() {
             data: filteredPoints,
             getPosition: d => [d.sc, d.hc, d.relint],
             getColor: d => [...d.color, state.controls.alpha],
-            pointSize: state.controls.pointSize * 0.05,
+            pointSize: state.controls.pointSize,
             sizeUnits: 'common',
             pickable: true,
             autoHighlight: false,
@@ -798,10 +798,13 @@ function updatePlot() {
                     data: sortedPoints,
                     getPosition: d => [d.sc, d.hc, d.relint],
                     getColor: d => {
+                        const minTime = sortedPoints[0].time;
+                        const maxTime = sortedPoints[sortedPoints.length - 1].time;
+                        const timeRange = maxTime - minTime || 1;
                         const ratio = timeRange === 0 ? 0 : (d.time - minTime) / timeRange;
                         return [Math.floor(255 * ratio), 50, Math.floor(255 * (1 - ratio)), 255]; 
                     },
-                    pointSize: 4 * 0.05,
+                    pointSize: state.controls.pointSize,
                     sizeUnits: 'common'
                 })
             );
