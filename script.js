@@ -345,10 +345,8 @@ let deckgl = new DeckGL({
                 state.hoverTimeout = null;
             }
             // Ensure it is hovered
-            if (state.hoveredEpochId !== targetEpochId) {
-                state.hoveredEpochId = targetEpochId;
-                updateHoverInfo(targetEpochId, info.x, info.y);
-            }
+            state.hoveredEpochId = targetEpochId;
+            updateHoverInfo(targetEpochId, info.x, info.y);
             updatePlot();
         }
     },
@@ -698,7 +696,8 @@ function updatePlot() {
             data: filteredPoints,
             getPosition: d => [d.sc, d.hc, d.relint],
             getColor: d => [...d.color, state.controls.alpha],
-            pointSize: state.controls.pointSize,
+            pointSize: state.controls.pointSize * 0.05,
+            sizeUnits: 'common',
             pickable: true,
             autoHighlight: false,
             pickingRadius: 5,
@@ -775,7 +774,8 @@ function updatePlot() {
                         const ratio = timeRange === 0 ? 0 : (d.time - minTime) / timeRange;
                         return [Math.floor(255 * ratio), 50, Math.floor(255 * (1 - ratio)), 255]; 
                     },
-                    pointSize: 4
+                    pointSize: 4 * 0.05,
+                    sizeUnits: 'common'
                 })
             );
         }
