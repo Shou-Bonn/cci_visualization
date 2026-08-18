@@ -261,6 +261,15 @@ function renderLightcurve(data, objectName, minTime, maxTime) {
     }
 }
 
+const tooltipState = {
+    isDragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    offsetX: 15,
+    offsetY: 15,
+    anchor3D: null
+};
+
 const state = {
     rawData: [],
     points: [],
@@ -348,23 +357,58 @@ let deckgl = new DeckGL({
             // Force completely unfreeze and clear hover so it returns to full plot
             state.lockedEpochId = null;
             state.hoveredEpochId = null;
-            clearHoverInfo();
+            document.getElementById('tooltip').classList.add('hidden');
+            document.getElementById('lightcurve-panel').classList.add('hidden');
             updatePlot();
-        } else if (info.object || state.hoveredEpochId) {
-            // Lock the epoch
+            clearHoverInfo();
+            return;
+        }
+
+        if (info.object || state.hoveredEpochId) {
             const targetEpochId = info.object ? info.object.epoch_id : state.hoveredEpochId;
             state.lockedEpochId = targetEpochId;
-            if (state.hoverTimeout) {
-                clearTimeout(state.hoverTimeout);
-                state.hoverTimeout = null;
+            if (info.coordinate) {
+                tooltipState.anchor3D = info.coordinate;
             }
             // Ensure it is hovered
             state.hoveredEpochId = targetEpochId;
-            updateHoverInfo(targetEpochId, info.x, info.y);
+            updateHoverInfo(targetEpochId);
             updatePlot();
         }
     },
     layers: []
+});
+
+// Tooltip dragging logic
+const tooltipElement = document.getElementById('tooltip');
+tooltipElement.addEventListener('mousedown', e => {
+    // Only allow drag if locked (frozen) so it's stable
+    if (state.lockedEpochId) {
+        tooltipState.isDragging = true;
+        tooltipState.dragStartX = e.clientX;
+        tooltipState.dragStartY = e.clientY;
+        e.stopPropagation(); // prevent map from panning
+        tooltipElement.style.cursor = 'grabbing';
+    }
+});
+
+window.addEventListener('mousemove', e => {
+    if (tooltipState.isDragging) {
+        const dx = e.clientX - tooltipState.dragStartX;
+        const dy = e.clientY - tooltipState.dragStartY;
+        tooltipState.offsetX += dx;
+        tooltipState.offsetY += dy;
+        tooltipState.dragStartX = e.clientX;
+        tooltipState.dragStartY = e.clientY;
+        updateTooltipPosition();
+    }
+});
+
+window.addEventListener('mouseup', () => {
+    if (tooltipState.isDragging) {
+        tooltipState.isDragging = false;
+        tooltipElement.style.cursor = 'move';
+    }
 });
 
 document.addEventListener('DOMContentLoaded', init);
@@ -737,11 +781,16 @@ function updatePlot() {
                 
                 if (info.object && info.object.epoch_id !== state.hoveredEpochId) {
                     if (state.hoverTimeout) {
+                       if (state.lockedEpochId !== info.object.epoch_id) {
                         clearTimeout(state.hoverTimeout);
-                        state.hoverTimeout = null;
+                    }
+                    state.hoverTimeout = null;
                     }
                     state.hoveredEpochId = info.object.epoch_id;
-                    updateHoverInfo(info.object.epoch_id, info.x, info.y);
+                    tooltipState.anchor3D = info.coordinate;
+                    tooltipState.offsetX = 15;
+                    tooltipState.offsetY = 15;
+                    updateHoverInfo(info.object.epoch_id);
                     updatePlot(); // Re-render layers with highlight
                 } else if (!info.object && state.hoveredEpochId) {
                     if (!state.hoverTimeout) {
@@ -818,7 +867,27 @@ function updatePlot() {
     deckgl.setProps({layers});
 }
 
-async function updateHoverInfo(epochId, x, y) {
+function updateTooltipPosition() {
+    const tooltip = document.getElementById('tooltip');
+    if (tooltip && !tooltip.classList.contains('hidden') && tooltipState.anchor3D) {
+        const viewports = deckgl.getViewports();
+        if (viewports.length > 0) {
+            const screenCoords = viewports[0].project(tooltipState.anchor3D);
+            tooltip.style.left = (screenCoords[0] + tooltipState.offsetX) + 'px';
+            tooltip.style.top = (screenCoords[1] + tooltipState.offsetY) + 'px';
+        }
+    }
+}
+
+function tooltipLoop() {
+    if (state.lockedEpochId || state.hoveredEpochId) {
+        updateTooltipPosition();
+    }
+    requestAnimationFrame(tooltipLoop);
+}
+requestAnimationFrame(tooltipLoop);
+
+async function updateHoverInfo(epochId) {
     const epochData = state.epochMap.get(epochId);
     if (!epochData) return;
     
@@ -845,11 +914,11 @@ async function updateHoverInfo(epochId, x, y) {
         <button onclick="window.showLightcurve('${epochId}')" style="margin-top:10px; width:100%; padding: 5px; cursor: pointer; border: 1px solid #555; background: #333; color: white; border-radius: 4px;">See Lightcurve</button>
     `;
     
-    // Allow clicking the button ONLY when frozen, otherwise it blocks hover logic
+    // Allow interactions with tooltip content if locked
     tooltip.style.pointerEvents = state.lockedEpochId === epochId ? 'auto' : 'none';
+    tooltip.style.cursor = state.lockedEpochId === epochId ? 'move' : 'default';
     
     tooltip.classList.remove('hidden');
-    moveHoverTooltip(x, y);
 }
 
 window.showLightcurve = async function(epochId) {
