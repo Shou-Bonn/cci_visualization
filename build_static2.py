@@ -27,7 +27,7 @@ for filename in os.listdir(EPOCHS_DIR):
         raw_subclass = target_info.get('subclass') or 'Unknown'
         
         custom_subclass = 'Unknown'
-        if obj_class == 'Unknown' or raw_subclass == 'Unknown' or not obj_class or not raw_subclass:
+        if obj_class == 'Unknown' or raw_subclass == 'Unknown' or not obj_class or not raw_subclass or obj_class in ['NS or BH', 'BH or NS']:
             custom_subclass = 'Unknown'
         elif raw_subclass == 'LMXB':
             if obj_class == 'BH': custom_subclass = 'LMBH'
