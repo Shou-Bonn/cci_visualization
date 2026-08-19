@@ -279,7 +279,9 @@ const state = {
     selectedSubclasses: new Set(),
     selectedObjects: new Set(),
     objectsBySubclass: {},
+    subclassCheckboxes: {},
     objectPointCounts: {},
+    objectProperties: {},
     epochMap: new Map(),
     colorMap: {},
     hoveredEpochId: null,
@@ -424,8 +426,38 @@ async function init() {
         setupSliders();
         setupCameraButtons();
         renderFilters();
-        document.getElementById('filter-bursters').addEventListener('change', updatePlot);
-        document.getElementById('filter-debeurs').addEventListener('change', updatePlot);
+        syncGlobalCheckboxes();
+        document.getElementById('filter-bursters').addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            Object.keys(state.objectProperties).forEach(obj => {
+                if (state.objectProperties[obj].is_burster) {
+                    if (isChecked) state.selectedObjects.add(obj);
+                    else state.selectedObjects.delete(obj);
+                    
+                    if (state.objectProperties[obj].checkboxElement) {
+                        state.objectProperties[obj].checkboxElement.checked = isChecked;
+                    }
+                }
+            });
+            syncSubclassCheckboxes();
+            updatePlot();
+        });
+        
+        document.getElementById('filter-debeurs').addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            Object.keys(state.objectProperties).forEach(obj => {
+                if (state.objectProperties[obj].in_de_beurs) {
+                    if (isChecked) state.selectedObjects.add(obj);
+                    else state.selectedObjects.delete(obj);
+                    
+                    if (state.objectProperties[obj].checkboxElement) {
+                        state.objectProperties[obj].checkboxElement.checked = isChecked;
+                    }
+                }
+            });
+            syncSubclassCheckboxes();
+            updatePlot();
+        });
         
         document.getElementById('toggle-sidebar').addEventListener('click', (e) => {
             const sidebar = document.querySelector('.sidebar');
@@ -502,6 +534,11 @@ function processData() {
             state.objectsBySubclass[subclass].add(obj.object);
             state.selectedObjects.add(obj.object);
             state.objectPointCounts[obj.object] = totalObjPoints;
+            state.objectProperties[obj.object] = {
+                is_burster: obj.is_burster,
+                in_de_beurs: obj.in_de_beurs,
+                checkboxElement: null // We will store the DOM element here
+            };
             state.subclasses.add(subclass);
             state.selectedSubclasses.add(subclass);
         } 
@@ -527,6 +564,7 @@ function renderFilters() {
         checkbox.type = 'checkbox';
         checkbox.checked = true;
         checkbox.value = subclass;
+        state.subclassCheckboxes[subclass] = checkbox;
         
         const colorIndicator = document.createElement('input');
         colorIndicator.type = 'color';
@@ -587,6 +625,9 @@ function renderFilters() {
             objCheckbox.checked = true;
             objCheckbox.value = objName;
             
+            // Store reference to the checkbox element for global filters to interact with
+            state.objectProperties[objName].checkboxElement = objCheckbox;
+            
             objCheckbox.addEventListener('change', (e) => {
                 if (e.target.checked) {
                     state.selectedObjects.add(objName);
@@ -594,11 +635,8 @@ function renderFilters() {
                     state.selectedObjects.delete(objName);
                 }
                 
-                const allChecked = objectCheckboxes.every(cb => cb.checked);
-                const noneChecked = objectCheckboxes.every(cb => !cb.checked);
-                
-                checkbox.checked = !noneChecked;
-                checkbox.indeterminate = !allChecked && !noneChecked;
+                syncSubclassCheckboxes();
+                syncGlobalCheckboxes();
                 
                 updatePlot();
             });
@@ -619,6 +657,7 @@ function renderFilters() {
                     state.selectedObjects.delete(cb.value);
                 }
             });
+            syncGlobalCheckboxes();
             updatePlot();
         });
         
@@ -756,22 +795,50 @@ function getTicks(min, max) {
     return ticks;
 }
 
-function updatePlot() {
-    const showBursters = document.getElementById('filter-bursters').checked;
-    const showDeBeurs = document.getElementById('filter-debeurs').checked;
-    
-    const filteredPoints = state.points.filter(p => {
-        if (!showBursters && p.is_burster) return false;
-        if (showDeBeurs && !p.in_de_beurs) return false;
+function syncSubclassCheckboxes() {
+    Array.from(state.subclasses).forEach(subclass => {
+        const checkbox = state.subclassCheckboxes[subclass];
+        if (!checkbox) return;
         
+        const objects = Array.from(state.objectsBySubclass[subclass]);
+        if (objects.length > 0) {
+            const allChecked = objects.every(obj => state.selectedObjects.has(obj));
+            const noChecked = objects.every(obj => !state.selectedObjects.has(obj));
+            
+            checkbox.checked = !noChecked;
+            checkbox.indeterminate = !allChecked && !noChecked;
+        }
+    });
+}
+
+function syncGlobalCheckboxes() {
+    const bursters = Object.keys(state.objectProperties).filter(obj => state.objectProperties[obj].is_burster);
+    if (bursters.length > 0) {
+        const allBurstersChecked = bursters.every(obj => state.selectedObjects.has(obj));
+        const noBurstersChecked = bursters.every(obj => !state.selectedObjects.has(obj));
+        const bursterEl = document.getElementById('filter-bursters');
+        bursterEl.checked = !noBurstersChecked;
+        bursterEl.indeterminate = !allBurstersChecked && !noBurstersChecked;
+    }
+    
+    // For de Beurs, it behaves identically according to user "This is also true for the show de Beurs only button"
+    const debeurs = Object.keys(state.objectProperties).filter(obj => state.objectProperties[obj].in_de_beurs);
+    if (debeurs.length > 0) {
+        const allDebeursChecked = debeurs.every(obj => state.selectedObjects.has(obj));
+        const noDebeursChecked = debeurs.every(obj => !state.selectedObjects.has(obj));
+        const debeursEl = document.getElementById('filter-debeurs');
+        debeursEl.checked = !noDebeursChecked;
+        debeursEl.indeterminate = !allDebeursChecked && !noDebeursChecked;
+    }
+}
+
+function updatePlot() {
+    const filteredPoints = state.points.filter(p => {
         // Physically remove unhovered points to prevent WebGL depth-buffer blocking
         const activeEpoch = state.lockedEpochId || state.hoveredEpochId;
         if (activeEpoch && p.epoch_id !== activeEpoch) return false;
         
-        const isSelectedObject = state.selectedObjects.has(p.object);
-        const shouldShow = isSelectedObject || (showBursters && p.is_burster);
-        
-        return shouldShow &&
+        return state.selectedObjects.has(p.object) &&
             p.sc >= state.controls.xMin && p.sc <= state.controls.xMax &&
             p.hc >= state.controls.yMin && p.hc <= state.controls.yMax &&
             p.relint >= state.controls.zMin && p.relint <= state.controls.zMax;
