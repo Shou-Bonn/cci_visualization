@@ -459,6 +459,30 @@ async function init() {
             updatePlot();
         });
         
+        document.getElementById('btn-check-all').addEventListener('click', () => {
+            Object.keys(state.objectProperties).forEach(obj => {
+                state.selectedObjects.add(obj);
+                if (state.objectProperties[obj].checkboxElement) {
+                    state.objectProperties[obj].checkboxElement.checked = true;
+                }
+            });
+            syncSubclassCheckboxes();
+            syncGlobalCheckboxes();
+            updatePlot();
+        });
+        
+        document.getElementById('btn-clear-all').addEventListener('click', () => {
+            state.selectedObjects.clear();
+            Object.keys(state.objectProperties).forEach(obj => {
+                if (state.objectProperties[obj].checkboxElement) {
+                    state.objectProperties[obj].checkboxElement.checked = false;
+                }
+            });
+            syncSubclassCheckboxes();
+            syncGlobalCheckboxes();
+            updatePlot();
+        });
+        
         document.getElementById('toggle-sidebar').addEventListener('click', (e) => {
             const sidebar = document.querySelector('.sidebar');
             sidebar.classList.toggle('collapsed');
