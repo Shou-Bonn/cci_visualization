@@ -277,6 +277,8 @@ const state = {
     points: [],
     subclasses: new Set(),
     selectedSubclasses: new Set(),
+    selectedObjects: new Set(),
+    objectsBySubclass: {},
     epochMap: new Map(),
     colorMap: {},
     hoveredEpochId: null,
@@ -450,6 +452,12 @@ function processData() {
         const subclass = obj.subclass;
         state.subclasses.add(subclass);
         state.selectedSubclasses.add(subclass);
+        state.selectedObjects.add(obj.object);
+        
+        if (!state.objectsBySubclass[subclass]) {
+            state.objectsBySubclass[subclass] = new Set();
+        }
+        state.objectsBySubclass[subclass].add(obj.object);
         
         if (!state.colorMap[subclass]) {
             state.colorMap[subclass] = getColorForSubclass(subclass);
@@ -497,14 +505,20 @@ function renderFilters() {
     container.innerHTML = '';
     
     Array.from(state.subclasses).sort().forEach(subclass => {
-        const label = document.createElement('label');
-        label.className = 'filter-label';
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'subclass-group';
+        
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'subclass-header';
+        
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'toggle-btn';
+        toggleBtn.innerHTML = '▶';
         
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = true;
         checkbox.value = subclass;
-        checkbox.addEventListener('change', handleFilterChange);
         
         const colorIndicator = document.createElement('input');
         colorIndicator.type = 'color';
@@ -532,22 +546,77 @@ function renderFilters() {
             updatePlot();
         });
         
-        label.appendChild(checkbox);
-        label.appendChild(colorIndicator);
-        label.appendChild(document.createTextNode(subclass));
+        headerDiv.appendChild(toggleBtn);
+        headerDiv.appendChild(checkbox);
+        headerDiv.appendChild(colorIndicator);
+        headerDiv.appendChild(document.createTextNode(subclass));
         
-        container.appendChild(label);
+        groupDiv.appendChild(headerDiv);
+        
+        const objectListDiv = document.createElement('div');
+        objectListDiv.className = 'object-list';
+        objectListDiv.style.display = 'none';
+        
+        toggleBtn.addEventListener('click', () => {
+            if (objectListDiv.style.display === 'none') {
+                objectListDiv.style.display = 'flex';
+                toggleBtn.innerHTML = '▼';
+            } else {
+                objectListDiv.style.display = 'none';
+                toggleBtn.innerHTML = '▶';
+            }
+        });
+        
+        const objects = Array.from(state.objectsBySubclass[subclass]).sort();
+        const objectCheckboxes = [];
+        
+        objects.forEach(objName => {
+            const objLabel = document.createElement('label');
+            objLabel.className = 'object-item';
+            
+            const objCheckbox = document.createElement('input');
+            objCheckbox.type = 'checkbox';
+            objCheckbox.checked = true;
+            objCheckbox.value = objName;
+            
+            objCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    state.selectedObjects.add(objName);
+                } else {
+                    state.selectedObjects.delete(objName);
+                }
+                
+                const allChecked = objectCheckboxes.every(cb => cb.checked);
+                const noneChecked = objectCheckboxes.every(cb => !cb.checked);
+                
+                checkbox.checked = !noneChecked;
+                checkbox.indeterminate = !allChecked && !noneChecked;
+                
+                updatePlot();
+            });
+            
+            objectCheckboxes.push(objCheckbox);
+            objLabel.appendChild(objCheckbox);
+            objLabel.appendChild(document.createTextNode(objName));
+            objectListDiv.appendChild(objLabel);
+        });
+        
+        checkbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            objectCheckboxes.forEach(cb => {
+                cb.checked = isChecked;
+                if (isChecked) {
+                    state.selectedObjects.add(cb.value);
+                } else {
+                    state.selectedObjects.delete(cb.value);
+                }
+            });
+            updatePlot();
+        });
+        
+        groupDiv.appendChild(objectListDiv);
+        container.appendChild(groupDiv);
     });
-}
-
-function handleFilterChange(e) {
-    const subclass = e.target.value;
-    if (e.target.checked) {
-        state.selectedSubclasses.add(subclass);
-    } else {
-        state.selectedSubclasses.delete(subclass);
-    }
-    updatePlot();
 }
 
 function setupSliders() {
@@ -691,10 +760,10 @@ function updatePlot() {
         const activeEpoch = state.lockedEpochId || state.hoveredEpochId;
         if (activeEpoch && p.epoch_id !== activeEpoch) return false;
         
-        const isSelectedClass = state.selectedSubclasses.has(p.subclass);
-        const shouldShowByClass = isSelectedClass || (showBursters && p.is_burster);
+        const isSelectedObject = state.selectedObjects.has(p.object);
+        const shouldShow = isSelectedObject || (showBursters && p.is_burster);
         
-        return shouldShowByClass &&
+        return shouldShow &&
             p.sc >= state.controls.xMin && p.sc <= state.controls.xMax &&
             p.hc >= state.controls.yMin && p.hc <= state.controls.yMax &&
             p.relint >= state.controls.zMin && p.relint <= state.controls.zMax;

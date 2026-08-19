@@ -287,3 +287,58 @@ input[type="color"]::-moz-color-swatch {
     border: none;
     border-radius: 50%;
 }
+/* Expandable Filters Styling */
+.subclass-group {
+    margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.subclass-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    min-width: 20px;
+    text-align: center;
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+.toggle-btn:hover {
+    color: #fff;
+}
+
+.object-list {
+    display: flex;
+    flex-direction: column;
+    margin-left: 25px;
+    padding-left: 5px;
+    border-left: 1px solid #444;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    gap: 4px;
+}
+
+.object-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #ccc;
+}
+
+.object-item input[type="checkbox"] {
+    accent-color: var(--accent-color);
+    width: 14px;
+    height: 14px;
+}
