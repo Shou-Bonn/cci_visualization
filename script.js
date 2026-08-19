@@ -279,6 +279,7 @@ const state = {
     selectedSubclasses: new Set(),
     selectedObjects: new Set(),
     objectsBySubclass: {},
+    objectPointCounts: {},
     epochMap: new Map(),
     colorMap: {},
     hoveredEpochId: null,
@@ -450,14 +451,12 @@ async function init() {
 function processData() {
     state.rawData.forEach(obj => {
         const subclass = obj.subclass;
-        state.subclasses.add(subclass);
-        state.selectedSubclasses.add(subclass);
-        state.selectedObjects.add(obj.object);
         
         if (!state.objectsBySubclass[subclass]) {
             state.objectsBySubclass[subclass] = new Set();
         }
-        state.objectsBySubclass[subclass].add(obj.object);
+        
+        let totalObjPoints = 0;
         
         if (!state.colorMap[subclass]) {
             state.colorMap[subclass] = getColorForSubclass(subclass);
@@ -476,6 +475,7 @@ function processData() {
             
             // Flatten points for Deck.gl
             epoch.points.forEach(p => {
+                totalObjPoints++;
                 state.bounds.x.min = Math.min(state.bounds.x.min, p.sc);
                 state.bounds.x.max = Math.max(state.bounds.x.max, p.sc);
                 state.bounds.y.min = Math.min(state.bounds.y.min, p.hc);
@@ -497,6 +497,14 @@ function processData() {
                 });
             });
         });
+        
+        if (totalObjPoints > 0) {
+            state.objectsBySubclass[subclass].add(obj.object);
+            state.selectedObjects.add(obj.object);
+            state.objectPointCounts[obj.object] = totalObjPoints;
+            state.subclasses.add(subclass);
+            state.selectedSubclasses.add(subclass);
+        } 
     });
 }
 
@@ -549,7 +557,7 @@ function renderFilters() {
         headerDiv.appendChild(toggleBtn);
         headerDiv.appendChild(checkbox);
         headerDiv.appendChild(colorIndicator);
-        headerDiv.appendChild(document.createTextNode(subclass));
+        headerDiv.appendChild(document.createTextNode(`${subclass} (${state.objectsBySubclass[subclass].size})`));
         
         groupDiv.appendChild(headerDiv);
         
@@ -597,7 +605,7 @@ function renderFilters() {
             
             objectCheckboxes.push(objCheckbox);
             objLabel.appendChild(objCheckbox);
-            objLabel.appendChild(document.createTextNode(objName));
+            objLabel.appendChild(document.createTextNode(`${objName} [${state.objectPointCounts[objName]}]`));
             objectListDiv.appendChild(objLabel);
         });
         
