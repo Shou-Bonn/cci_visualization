@@ -111,7 +111,7 @@ function renderLightcurve(data, objectName, minTime, maxTime) {
             if (data.bands[band]) {
                 const bData = data.bands[band];
                 const pointColors = bData.bincenter.map(time => 
-                    (time >= minTime && time <= maxTime) ? 'orange' : 'grey'
+                    (time >= minTime && time <= maxTime) ? '#ff00ff' : 'rgba(255, 255, 255, 0.4)'
                 );
                 colorUpdates.push(pointColors);
             }
@@ -135,15 +135,15 @@ function renderLightcurve(data, objectName, minTime, maxTime) {
         if (!data.bands[band]) return;
         const bData = data.bands[band];
         
-        // Color points dim cyan, except for the hovered epoch window which is bright neon pink
+        // Color points white, except for the hovered epoch window which is bright neon pink
         const pointColors = bData.bincenter.map(time => 
-            (time >= minTime && time <= maxTime) ? '#ff00ff' : 'rgba(0, 243, 255, 0.4)'
+            (time >= minTime && time <= maxTime) ? '#ff00ff' : 'rgba(255, 255, 255, 0.4)'
         );
         
         traces.push({
             x: bData.bincenter,
             y: bData.rate,
-            error_y: { type: 'data', array: bData.error, visible: true, color: 'rgba(0, 243, 255, 0.2)' },
+            error_y: { type: 'data', array: bData.error, visible: true, color: 'rgba(255, 255, 255, 0.2)' },
             mode: 'markers',
             type: 'scattergl',
             marker: { color: pointColors, size: 4 },
@@ -1024,13 +1024,7 @@ function updatePlot() {
                     id: 'glow-points',
                     data: sortedPoints,
                     getPosition: d => [d.sc, d.hc, d.relint],
-                    getColor: d => {
-                        const minTime = sortedPoints[0].time;
-                        const maxTime = sortedPoints[sortedPoints.length - 1].time;
-                        const timeRange = maxTime - minTime || 1;
-                        const ratio = timeRange === 0 ? 0 : (d.time - minTime) / timeRange;
-                        return [Math.floor(255 * (1 - ratio)), 200, Math.floor(255 * ratio), 50]; 
-                    },
+                    getColor: d => [...d.color, 50],
                     pointSize: state.controls.pointSize * 2.5,
                     sizeUnits: 'common'
                 }),
@@ -1038,13 +1032,7 @@ function updatePlot() {
                     id: 'highlight-points',
                     data: sortedPoints,
                     getPosition: d => [d.sc, d.hc, d.relint],
-                    getColor: d => {
-                        const minTime = sortedPoints[0].time;
-                        const maxTime = sortedPoints[sortedPoints.length - 1].time;
-                        const timeRange = maxTime - minTime || 1;
-                        const ratio = timeRange === 0 ? 0 : (d.time - minTime) / timeRange;
-                        return [Math.floor(255 * (1 - ratio)), 255, Math.floor(255 * ratio), 255]; 
-                    },
+                    getColor: d => [...d.color, 255],
                     pointSize: state.controls.pointSize * 1.2,
                     sizeUnits: 'common'
                 })
