@@ -151,12 +151,6 @@ function renderLightcurve(data, objectName, minTime, maxTime) {
             name: band
         });
     });
-
-    const displayMinTime = minTime;
-    const displayMaxTime = maxTime;
-
-    const absoluteMinX = Math.min(...bands.map(b => data.bands[b] ? Math.min(...data.bands[b].bincenter) : Infinity));
-    const absoluteMaxX = Math.max(...bands.map(b => data.bands[b] ? Math.max(...data.bands[b].bincenter) : -Infinity));
     
     const layout = {
         title: { text: `${objectName} Lightcurves`, font: { color: '#00f3ff', size: 16, family: 'Orbitron' } },
