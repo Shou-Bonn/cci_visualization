@@ -135,47 +135,47 @@ function renderLightcurve(data, objectName, minTime, maxTime) {
         if (!data.bands[band]) return;
         const bData = data.bands[band];
         
-        // Color points grey, except for the hovered epoch window which is orange
+        // Color points dim cyan, except for the hovered epoch window which is bright neon pink
         const pointColors = bData.bincenter.map(time => 
-            (time >= minTime && time <= maxTime) ? 'orange' : 'grey'
+            (time >= minTime && time <= maxTime) ? '#ff00ff' : 'rgba(0, 243, 255, 0.4)'
         );
         
         traces.push({
             x: bData.bincenter,
             y: bData.rate,
-            error_y: {
-                type: 'data',
-                array: bData.error,
-                visible: true,
-                color: 'rgba(255,255,255,0.1)'
-            },
+            error_y: { type: 'data', array: bData.error, visible: true, color: 'rgba(0, 243, 255, 0.2)' },
             mode: 'markers',
-            type: 'scattergl', // Critical for 10k+ points GPU rendering
-            marker: { size: 4, color: pointColors },
-            name: band,
-            xaxis: 'x',
-            yaxis: `y${index + 1}`
+            type: 'scattergl',
+            marker: { color: pointColors, size: 4 },
+            yaxis: `y${index === 0 ? '' : index + 1}`,
+            name: band
         });
     });
+
+    const displayMinTime = minTime;
+    const displayMaxTime = maxTime;
+
+    const absoluteMinX = Math.min(...bands.map(b => data.bands[b] ? Math.min(...data.bands[b].bincenter) : Infinity));
+    const absoluteMaxX = Math.max(...bands.map(b => data.bands[b] ? Math.max(...data.bands[b].bincenter) : -Infinity));
     
     const layout = {
-        title: { text: `${objectName} Lightcurves`, font: { color: '#fff', size: 14 } },
+        title: { text: `${objectName} Lightcurves`, font: { color: '#00f3ff', size: 16, family: 'Orbitron' } },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#aaa', size: 10 },
-        margin: { l: 40, r: 10, t: 40, b: 30 },
+        font: { color: '#a1f4fa', size: 11, family: 'Share Tech Mono' },
+        margin: { l: 45, r: 10, t: 40, b: 35 },
         showlegend: false,
         xaxis: { 
             title: 'Time (MJD)', 
             showgrid: true, 
-            gridcolor: '#333', 
+            gridcolor: 'rgba(0, 243, 255, 0.1)', 
             zeroline: false,
             minallowed: absoluteMinX,
             maxallowed: absoluteMaxX
         },
-        yaxis: { domain: [0.68, 1], title: '2-3 keV', showgrid: true, gridcolor: '#333', zeroline: false, fixedrange: true },
-        yaxis2: { domain: [0.34, 0.66], title: '3-5 keV', showgrid: true, gridcolor: '#333', zeroline: false, fixedrange: true },
-        yaxis3: { domain: [0, 0.32], title: '5-12 keV', showgrid: true, gridcolor: '#333', zeroline: false, fixedrange: true },
+        yaxis: { domain: [0.68, 1], title: '2-3 keV', showgrid: true, gridcolor: 'rgba(0, 243, 255, 0.1)', zeroline: false, fixedrange: true },
+        yaxis2: { domain: [0.34, 0.66], title: '3-5 keV', showgrid: true, gridcolor: 'rgba(0, 243, 255, 0.1)', zeroline: false, fixedrange: true },
+        yaxis3: { domain: [0, 0.32], title: '5-12 keV', showgrid: true, gridcolor: 'rgba(0, 243, 255, 0.1)', zeroline: false, fixedrange: true },
         shapes: [
             {
                 type: 'rect',
@@ -185,8 +185,8 @@ function renderLightcurve(data, objectName, minTime, maxTime) {
                 x1: displayMaxTime,
                 y0: 0,
                 y1: 1,
-                fillcolor: 'rgba(255, 165, 0, 0.2)', // Light transparent orange
-                line: { width: 0 },
+                fillcolor: 'rgba(255, 0, 255, 0.15)', // Light transparent neon pink
+                line: { color: '#ff00ff', width: 1, dash: 'dot' },
                 layer: 'below'
             }
         ]
@@ -1009,6 +1009,15 @@ function updatePlot() {
 
             layers.push(
                 new LineLayer({
+                    id: 'glow-lines',
+                    data: lineSegments,
+                    getSourcePosition: d => d.src,
+                    getTargetPosition: d => d.tgt,
+                    getColor: d => [...d.color.slice(0, 3), 100],
+                    getWidth: 8,
+                    widthUnits: 'pixels'
+                }),
+                new LineLayer({
                     id: 'highlight-lines',
                     data: lineSegments,
                     getSourcePosition: d => d.src,
@@ -1016,6 +1025,20 @@ function updatePlot() {
                     getColor: d => d.color,
                     getWidth: 3,
                     widthUnits: 'pixels'
+                }),
+                new PointCloudLayer({
+                    id: 'glow-points',
+                    data: sortedPoints,
+                    getPosition: d => [d.sc, d.hc, d.relint],
+                    getColor: d => {
+                        const minTime = sortedPoints[0].time;
+                        const maxTime = sortedPoints[sortedPoints.length - 1].time;
+                        const timeRange = maxTime - minTime || 1;
+                        const ratio = timeRange === 0 ? 0 : (d.time - minTime) / timeRange;
+                        return [Math.floor(255 * (1 - ratio)), 200, Math.floor(255 * ratio), 50]; 
+                    },
+                    pointSize: state.controls.pointSize * 2.5,
+                    sizeUnits: 'common'
                 }),
                 new PointCloudLayer({
                     id: 'highlight-points',
@@ -1026,9 +1049,9 @@ function updatePlot() {
                         const maxTime = sortedPoints[sortedPoints.length - 1].time;
                         const timeRange = maxTime - minTime || 1;
                         const ratio = timeRange === 0 ? 0 : (d.time - minTime) / timeRange;
-                        return [Math.floor(255 * ratio), 50, Math.floor(255 * (1 - ratio)), 255]; 
+                        return [Math.floor(255 * (1 - ratio)), 255, Math.floor(255 * ratio), 255]; 
                     },
-                    pointSize: state.controls.pointSize,
+                    pointSize: state.controls.pointSize * 1.2,
                     sizeUnits: 'common'
                 })
             );

@@ -1,9 +1,11 @@
 :root {
-    --bg-color: #121212;
-    --panel-bg: #1e1e1e;
-    --text-color: #e0e0e0;
-    --border-color: #333;
-    --accent-color: #bb86fc;
+    --bg-color: #050508;
+    --panel-bg: rgba(10, 15, 20, 0.95);
+    --text-color: #a1f4fa;
+    --border-color: #00f3ff;
+    --accent-color: #ff00ff;
+    --neon-blue: #00f3ff;
+    --neon-pink: #ff00ff;
 }
 
 * {
@@ -13,12 +15,20 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Share Tech Mono', monospace;
     background-color: var(--bg-color);
     color: var(--text-color);
     height: 100vh;
     display: flex;
     overflow: hidden;
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--neon-blue);
+    text-shadow: 0 0 5px var(--neon-blue);
 }
 
 .container {
@@ -33,7 +43,8 @@ body {
     max-width: 50vw;
     resize: horizontal;
     background-color: var(--panel-bg);
-    border-right: 1px solid var(--border-color);
+    border-right: 2px solid var(--border-color);
+    box-shadow: 2px 0 10px rgba(0, 243, 255, 0.2);
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -51,7 +62,7 @@ body {
 .sidebar h2, .sidebar h3 {
     margin-bottom: 10px;
     font-weight: 500;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(0, 243, 255, 0.3);
     padding-bottom: 5px;
 }
 
@@ -67,25 +78,31 @@ body {
     gap: 10px;
     cursor: pointer;
     font-size: 0.95rem;
+    transition: color 0.2s;
+}
+.filter-label:hover {
+    color: var(--neon-pink);
+    text-shadow: 0 0 5px var(--neon-pink);
 }
 
 .filter-label input[type="checkbox"] {
-    accent-color: var(--accent-color);
+    accent-color: var(--neon-pink);
     width: 16px;
     height: 16px;
+    cursor: pointer;
 }
 
 .tooltip {
     position: absolute;
     background-color: var(--panel-bg);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--neon-blue);
     padding: 15px;
-    border-radius: 6px;
+    border-radius: 4px;
     pointer-events: none;
     z-index: 100;
     font-size: 14px;
     color: var(--text-color);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
     max-width: 300px;
     user-select: none;
     -webkit-user-select: none;
@@ -173,20 +190,24 @@ body {
     gap: 8px;
 }
 
-.view-controls button {
-    background-color: #333;
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
+.view-controls button, .zoom-btn {
+    background-color: transparent;
+    color: var(--neon-blue);
+    border: 1px solid var(--neon-blue);
     padding: 8px 12px;
-    border-radius: 4px;
+    border-radius: 2px;
     cursor: pointer;
     font-size: 13px;
-    transition: background-color 0.2s;
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.2), inset 0 0 5px rgba(0, 243, 255, 0.1);
 }
 
-.view-controls button:hover {
-    background-color: var(--accent-color);
-    color: #000;
+.view-controls button:hover, .zoom-btn:hover {
+    background-color: rgba(0, 243, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.6), inset 0 0 10px rgba(0, 243, 255, 0.3);
+    text-shadow: 0 0 5px var(--neon-blue);
 }
 
 .lightcurve-panel {
@@ -196,13 +217,13 @@ body {
     width: 40%;
     max-width: 600px;
     height: 100vh;
-    background: rgba(30, 30, 30, 0.95);
-    border-left: 1px solid var(--border-color);
-    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+    background: var(--panel-bg);
+    border-left: 2px solid var(--border-color);
+    box-shadow: -2px 0 10px rgba(0, 243, 255, 0.2);
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    direction: rtl; /* Puts the resize handle on the left for right-anchored elements */
+    direction: rtl; /* Move scrollbar to left */
     resize: horizontal;
     overflow: auto;
 }
@@ -249,19 +270,6 @@ body {
     margin: 0;
 }
 
-.zoom-btn {
-    background: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.zoom-btn:hover {
-    background: #0088cc;
-}
 
 #lightcurve-plot {
     width: 100%;
